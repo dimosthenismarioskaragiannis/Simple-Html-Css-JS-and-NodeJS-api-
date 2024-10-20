@@ -1,4 +1,15 @@
-Η εργασία υλοποιήθηκε με χρήση nodejs με express framework.
+This is a simple "Ecommerce" website created with plain old Html Css and Javascript. It is served by a Node JS api.. 
+There is nothing fancy about this project, nor it demonstrates any skill , the only reason it is here its due to emotional attachment,
+ as it was my first experience developing a "fullstack web app". Found it randomly in one of my local folders, and i would like to pay my respects to this assignment,
+as it made me love web development.
+
+
+
+
+
+
+
+(Η εργασία υλοποιήθηκε με χρήση nodejs με express framework.
 O nodejs server μας εχει υλοποιηθει στο αρχειο app.js
 Για την σωστη προβολη των αρχειων πρώτα τρέξτε τον σερβερ με node app.js
 O client javascript code υλοποιηθηκε μεσα σε script tags στα html αρχεια.
@@ -12,4 +23,4 @@ username και sessionid. Κατοπιν αυτου γινεται refresh ώσ
 Οι καταχωρημενοι users einai   {username:admin, password:admin} {username:dimosthenis,password:123456789} {username:marios,password:987654321} {username:examiner,password:326159487}
 
 Με αυτο τον τροπο που υλοποιησαμε το auth μπορει να διατηρηθει το login session σε περιπτωση που γινει refresh η αλλαξουμε σελιδα, και χωρις να χρειαστει να περναμε το sessionid σαν url parameter.
-
+)
