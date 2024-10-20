@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>WikiShop Category Navigation</title>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <script>
+    async function checkLogin() {
+      //It checks if a current cookie session exists.
+      //If not you continue to browse unloggined.
+      // If exists it will cross check it with the api by fetching in the /auth location
+      // If the response is ok, then the login form dissapears and the user name appears (as response from nodejs)
+      //We use this so we keep the user session in every reload, and while changing pages. 
+      //Also the logout link appears. If clicked we have a /logout endpoint in app.js that  deletes the cookie session id
+      //by making it expire (Damn i should have used a multiline comment)
+      var storedCookies = document.cookie;
+      //check for existing session id
+      const preSessionId = storedCookies.split('=')[1];
+      console.log("Existing Session Id Is : " + preSessionId)
+      if (preSessionId != undefined) {
+
+        const response = await fetch('/auth');
+
+        if (await response.ok) {
+          sessionData = await response.json();
+          console.log(sessionData);
+
+          var formCont = document.getElementById("loginForm");
+          var newElement = document.createElement("p")
+          var newElement2 = document.createElement("button");
+          var newElement3 = document.createElement("a");
+
+          newElement3.className = 'logoutbtn';
+          newElement3.href='/cart.html';
+          newElement3.innerHTML = "View My Cart";
+
+
+          newElement2.className = 'logoutbtn';
+          newElement2.onclick=logout;
+          newElement2.innerHTML = "Logout";
+
+
+          newElement.innerHTML = "Hello " + sessionData.username + "&nbsp&nbsp";
+          formCont.parentNode.appendChild(newElement);
+          formCont.parentNode.appendChild(newElement3);
+          formCont.parentNode.appendChild(newElement2);
+
+          formCont.parentNode.removeChild(formCont);
+        }
+
+      }
+
+    }
+    async function logout(){
+      const response = await fetch('/logout');
+      location.reload();
+
+    }
+
+
+
+    window.onload = checkLogin;
+
+
+  </script>
+
+</head>
+
+<body>
+
+
+  <div class="container" id="container">
+    <header>
+      <a href="index.html">
+        <h2>WikiShop </h2>
+      </a>
+
+
+      <div class="login-container">
+        <form id="loginForm">
+          <input type="text" placeholder="Username" name="username">
+          <input type="password" placeholder="Password" name="password">
+          <button type="submit" class="btn">Login</button>
+        </form>
+      </div>
+
+
+
+    </header>
+    <div id="categories" class="flexContainer"></div>
+
+    <footer>
+      <h4>Dimosthenis Marios Karagiannis p3140069 , Marios Moustakidis p3160102</h4>
+    </footer>
+
+
+  </div>
+
+
+  
+  <script id="category-template" type="text/x-handlebars-template">
+    {{#each categories}}
+    <div class="flexItem">
+      <a href="/category.html?categoryId={{id}}">
+        <img src="{{img_url}}" alt="{{title}}" style="width:80%;height:80%;">
+        <h2>{{title}}</h2>
+        
+      </a>
+      {{#if subcategories}}
+        <div class="subcategories">
+          {{#each subcategories}}
+            <a href="/category.html?categoryId={{id}}">{{title}}</a>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+    {{/each}}
+
+
+
+
+
+  </script>
+  <script>
+    //Fetch the data and paste them into the handlebars template
+    var urlParams = new URLSearchParams(window.location.search);
+    var categoryId = urlParams.get("categoryId");
+    console.log("Im in handlebars fetch")
+    // fetch the list of categories from the API
+    fetch('https://wiki-shop.onrender.com/categories')
+      .then(response => response.json())
+      .then(data => {
+        // compile the handlebars template
+        var source = document.getElementById("category-template").innerHTML;
+        var template = Handlebars.compile(source);
+
+        // pass the data to the template and insert the generated HTML into the page
+        var html = template({
+          categories: data
+        });
+        document.getElementById("categories").innerHTML = html;
+      })
+      .catch(error => console.error(error));
+  </script>
+</body>
+
+</html>
+
+
+</script>
+
+
+<script>
+  // With this javascript we will post data using fetch api so i will get the response with cookies and some userdata
+  //Then we reload the page so the login auth can happen.
+
+
+
+  const form = document.getElementById("loginForm");
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const payload = new FormData(form);
+    //alert(payload.get("username"));
+    const data = new URLSearchParams(payload);
+
+    var serverUrl = "/";
+    let myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
+
+    let init = {
+      method: "POST",
+      headers: myHeaders,
+      body: data
+    }
+
+    const response = await fetch(serverUrl, init)
+    if (await response.ok) {
+      const dataRes = await response.json();
+      console.log(dataRes);
+      location.reload();
+
+
+    } else {
+      alert("Invalid Username or Password")
+    }
+  })
+</script>

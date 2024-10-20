@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>WikiShop Category</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css" />
+  <script>
+    async function checkLogin() {
+      //It checks if a current cookie session exists.
+      //If not you continue to browse unloggined.
+      // If exists it will cross check it with the api by fetching in the /auth location
+      // If the response is ok, then the login form dissapears and the user name appears (as response from nodejs)
+      //Also the logout link appears. If clicked we have a /logout endpoint in app.js that  deletes the cookie session id
+      //by making it expire (Damn i should have used a multiline comment)
+      var storedCookies = document.cookie;
+      //check for existing session id
+      const preSessionId = storedCookies.split('=')[1];
+      console.log("Existing Session Id Is : " + preSessionId)
+      if (preSessionId != undefined) {
+
+        const response = await fetch('/auth');
+
+        if (await response.ok) {
+          sessionData = await response.json();
+          console.log(sessionData);
+
+          var formCont = document.getElementById("loginForm");
+          var newElement = document.createElement("p")
+          var newElement2 = document.createElement("button");
+          var newElement3 = document.createElement("a");
+          
+          newElement3.className = 'logoutbtn';
+          newElement3.href='/cart.html';
+          newElement3.innerHTML = "View My Cart";
+
+          newElement2.className = 'logoutbtn';
+          newElement2.onclick=logout;
+          newElement2.innerHTML = "Logout";
+
+        
+
+
+          newElement.innerHTML = "Hello " + sessionData.username + "&nbsp &nbsp ";
+          formCont.parentNode.appendChild(newElement);
+          formCont.parentNode.appendChild(newElement3);
+          formCont.parentNode.appendChild(newElement2);
+          
+
+          formCont.parentNode.removeChild(formCont);
+        }
+
+      }
+
+    }
+    async function logout(){
+      const response = await fetch('/logout');
+      location.reload();
+
+    }
+
+    //ADDS PRODUCTS TO CART
+    async function addToCart(title,cost){
+        //console.log("Product: "+title+" Costs: "+cost);
+        const response = await fetch('/auth');
+        if(!response.ok){
+          alert("Please loggin first to add items to cart");
+        }else{
+          let cartData = {"title":title,"cost":cost};
+          
+          let myHeaders = new Headers();
+          myHeaders.append('Content-Type', 'application/json');
+          
+
+
+
+          let init = {
+          method: "POST",
+          headers: myHeaders, 
+          credentials:"include",
+          body: JSON.stringify(cartData)
+          }
+
+          var addResponse = await fetch('/addProduct',init);
+          var responceCart = await addResponse.json();
+
+        }
+
+
+        
+
+
+
+
+      
+        
+    }
+
+    window.onload = checkLogin;
+  </script>
+
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <a href="index.html">
+        <h2>WikiShop </h2>
+      </a>
+
+
+      <div class="login-container">
+        <form id="loginForm">
+          <input type="text" placeholder="Username" name="username">
+          <input type="password" placeholder="Password" name="password">
+          <button type="submit" class="btn">Login</button>
+        </form>
+      </div>
+    </header>
+
+    <div id="subcategories"></div>
+    <div id="products" class="flexContainer"></div>
+
+
+
+    <footer>
+      <h4>Dimosthenis Marios Karagiannis p3140069 , Marios Moustakidis p3160102</h4>
+    </footer>
+
+
+
+
+
+  </div>
+  <script id="product-template" type="text/x-handlebars-template">
+    {{#each products}}
+      
+      <div class="flexItem" id="prod{{id}}">
+        <img src="{{image}}" alt="{{title}}" style="width:100%;height:100%;">
+        <h2>{{title}}</h2>
+        <p>Product Id :{{id}}</p>
+        <p>{{description}}</p>
+        <p style="font-size:25px"><b>Price: {{cost}} $ </b></p>
+        <button class="cartBtn" onclick="addToCart('{{title}}',{{cost}}) ">Add To cart</button>
+      </div>
+      {{/each}}
+    </script>
+
+
+
+  <script>
+    async function getData() {
+      console.log(document.cookie);
+      //Gets the data for the products and stores them in the var data as json
+      var urlParams = new URLSearchParams(window.location.search);
+      var categoryId = urlParams.get("categoryId");
+      //fetch all products of the category
+      const responce = await fetch(`https://wiki-shop.onrender.com/categories/${categoryId}/products?`);
+      var data = await responce.json();
+      //Gets the data for the subcategories  and stores them in the var subcategories as json
+      const responseSub = await fetch(`https://wiki-shop.onrender.com/categories/${categoryId}/subcategories`);
+      var subcategories = await responseSub.json();
+
+
+      //Creates the subcategories and all items radio buttons 
+      var subcategoryDiv = document.getElementById("subcategories");
+
+      //Creates the All Items radio button
+      var input = document.createElement("input");
+      input.type = "radio";
+      input.name = "subcategory";
+      input.value = "490";
+      input.checked = "checked";
+      subcategoryDiv.appendChild(input);
+      var label = document.createElement("label");
+      label.innerHTML = "All Items";
+      subcategoryDiv.appendChild(label);
+
+      //Creates the subcategories radio buttons 
+      subcategories.forEach(subcategory => {
+        var input = document.createElement("input");
+        input.type = "radio";
+        input.name = "subcategory";
+        input.value = subcategory.id;
+        subcategoryDiv.appendChild(input);
+        var label = document.createElement("label");
+        label.innerHTML = subcategory.title;
+        subcategoryDiv.appendChild(label);
+      });
+
+      //Cause its preselected (alldata ) we show all data
+      var source = document.getElementById("product-template").innerHTML;
+      var template = Handlebars.compile(source);
+      var html = template({
+        products: data
+      });
+      document.getElementById("products").innerHTML = html;
+
+
+
+
+      // Adds event listener to the radio buttons , and filters by subcategory
+      document.querySelectorAll('input[name="subcategory"]').forEach(input => {
+        input.addEventListener("click", async function () {
+          var subcategoryId = this.value;
+          var products = [];
+          if (subcategoryId == 490) {
+            products = data;
+
+          } else {
+            for (var i = 0; i < data.length; i++) {
+
+              if (data[i].subcategory_id == subcategoryId) {
+                await products.push(data[i]);
+              }
+            }
+            console.log(products);
+          }
+
+
+
+          var source = document.getElementById("product-template").innerHTML;
+          var template = Handlebars.compile(source);
+          var html = template({
+            products: products
+          });
+          document.getElementById("products").innerHTML = html;
+        });
+      });
+
+
+
+    }
+    getData();
+  </script>
+
+
+
+
+
+  <script>
+    // With this javascript will post data using fetch api so i will get the response with cookies and some userdata
+
+
+
+    const form = document.getElementById("loginForm");
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const payload = new FormData(form);
+      //alert(payload.get("username"));
+      const data = new URLSearchParams(payload);
+
+      var serverUrl = "/";
+      let myHeaders = new Headers();
+      myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
+
+      let init = {
+        method: "POST",
+        headers: myHeaders,
+        body: data
+      }
+
+      const response = await fetch(serverUrl, init)
+      if (await response.ok) {
+        const dataRes = await response.json();
+        console.log(dataRes);
+        
+        console.log(document.cookie);
+        location.reload()
+
+
+      } else {
+        alert("Invalid Username or Password")
+      }
+    })
+  </script>
+
+
+
+</body>
+
+</html>

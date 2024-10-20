@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Cart</title>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <script>
+    async function checkLogin() {
+      //It checks if a current cookie session exists.
+      //If not you continue to browse unloggined.
+      // If exists it will cross check it with the api by fetching in the /auth location
+      // If the response is ok, then the login form dissapears and the user name appears (as response from nodejs)
+      //We use this so we keep the user session in every reload, and while changing pages. 
+      //Also the logout link appears. If clicked we have a /logout endpoint in app.js that  deletes the cookie session id
+      //by making it expire (Damn i should have used a multiline comment)
+      var storedCookies = document.cookie;
+      //check for existing session id
+      const preSessionId = storedCookies.split('=')[1];
+      console.log("Existing Session Id Is : " + preSessionId)
+      if (preSessionId != undefined) {
+
+        const response = await fetch('/auth');
+
+        if (await response.ok) {
+          sessionData = await response.json();
+          console.log(sessionData);
+
+          var formCont = document.getElementById("loginForm");
+          var newElement = document.createElement("p")
+          var newElement2 = document.createElement("button");
+          newElement2.className = 'logoutbtn';
+          newElement2.onclick=logout;
+          newElement2.innerHTML = "Logout";
+
+
+          newElement.innerHTML = "Hello " + sessionData.username + "&nbsp &nbsp";
+          formCont.parentNode.appendChild(newElement);
+          formCont.parentNode.appendChild(newElement2);
+
+          formCont.parentNode.removeChild(formCont);
+        }
+
+      }else{
+        alert("Please login to view cart")
+        location.replace("/index.html")
+      }
+
+    }
+    async function logout(){
+      const response = await fetch('/logout');
+      location.reload();
+
+    }
+
+
+
+    window.onload = checkLogin;
+
+
+  </script>
+
+</head>
+
+<body>
+
+
+    <div class="container" id="container">
+        <header>
+          <a href="index.html">
+            <h2>WikiShop </h2>
+          </a>
+    
+          
+          <div class="login-container">
+            <form id="loginForm">
+              <input type="text" placeholder="Username" name="username">
+              <input type="password" placeholder="Password" name="password">
+              <button type="submit" class="btn">Login</button>
+            </form>
+          </div>
+    
+    
+    
+        </header>
+        <div class="example">Hello To my cart page</div>
+        <div id="tableContainer">
+        
+
+        </div>
+    
+        <footer>
+          <h4>Dimosthenis Marios Karagiannis p3140069 , Marios Moustakidis p3160102</h4>
+        </footer>
+    
+    
+      </div>
+
+
+
+      <script id="cart-template" type="text/x-handlebars-template">
+        <table class="table">
+            <thead>
+                <tr><th colspan="3" style="text-align:center;">My Cart</th></tr>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each cartItems}}
+                <tr>
+                  <td>{{title}}</td>
+                  <td>{{cost}}</td>
+                  <td>{{quantity}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3">Total Cost: {{totalCost}}</td>
+              </tr>
+            </tfoot>
+          </table>
+    </script>
+
+
+
+    
+    <script>
+      // Get the table element
+    
+      // Compile the template
+   
+
+      // Fetch the JSON data from the '/cart' endpoint
+      fetch('/cart')
+        .then(response => response.json())
+        .then(data => {
+            // Compile the handlebars template
+            var source = document.getElementById('cart-template').innerHTML;
+            var template = Handlebars.compile(source);
+            console.log(data);
+        
+            // Render the template with the fetched data
+            var html = template(data);
+            document.getElementById('tableContainer').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+    
